@@ -1,4 +1,4 @@
-# NZWalks API
+# Walks
 
 A RESTful ASP.NET Core Web API for managing walking tracks, regions, images, and authentication for New Zealand walks.
 
