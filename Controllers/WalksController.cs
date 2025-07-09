@@ -4,6 +4,8 @@ using NZWalks.API.Models.DTO;
 using AutoMapper;
 using NZWalks.API.Models;
 using NZWalks.API.Repositories;
+using NZWalks.API.CustomActionFilters;
+using System.Net;
 namespace NZWalks.API.Controllers;
 
 [Route("api/[controller]")]
@@ -21,29 +23,22 @@ public class WalksController : ControllerBase
     }
 
     [HttpPost]
+    [ValidateModel]
     public async Task<IActionResult> Create([FromBody] AddWalkDto addWalk)
     {
-        if (addWalk == null)
-        {
-            return BadRequest("Walk cannot be null");
-        }
         // Map DTO to Domain Model
         var walkDomainModel = mapper.Map<Walk>(addWalk);
         await walkRepository.CreateAsync(walkDomainModel);
         // Map Domain Model back to DTO
+        var walkWithRelations = await walkRepository.GetByIdAsync(walkDomainModel.Id);
 
-        return Ok(mapper.Map<WalkDto>(walkDomainModel));
+        return Ok(mapper.Map<WalkDto>(walkWithRelations));
     }
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] string? filterBy, [FromQuery] string? filterQuery, [FromQuery] string? sortBy, [FromQuery] string? sortDirection, [FromQuery] int page = 1, [FromQuery] int limit = 9)
     {
-        var walks = await walkRepository.GetAllAsync();
-        // if (walks == null || walks.Count == 0)
-        // {
-        //     return NotFound("No walks found");
-        // }
+        var walks = await walkRepository.GetAllAsync(filterBy, filterQuery, sortBy, sortDirection, page, limit);
         return Ok(mapper.Map<List<WalkDto>>(walks));
-
     }
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetWalkById([FromRoute] Guid id)
@@ -56,8 +51,10 @@ public class WalksController : ControllerBase
         return Ok(mapper.Map<WalkDto>(walk));
     }
     [HttpPatch("{id:guid}")]
+    [ValidateModel]
     public async Task<IActionResult> UpdateWalk([FromRoute] Guid id, [FromBody] UpdateWalkDto updateWalkDto)
     {
+
         var walkDomainModel = mapper.Map<Walk>(updateWalkDto);
         walkDomainModel = await walkRepository.UpdateAsync(id, walkDomainModel);
 
@@ -65,9 +62,10 @@ public class WalksController : ControllerBase
         {
             return NotFound($"Walk with id {id} not found");
         }
+        var walkWithRelations = await walkRepository.GetByIdAsync(id);
 
-        return Ok(mapper.Map<WalkDto>(walkDomainModel));
-        // Map DTO to Domain Model
+        return Ok(mapper.Map<WalkDto>(walkWithRelations));
+
 
 
     }
@@ -80,6 +78,7 @@ public class WalksController : ControllerBase
         {
             return NotFound($"Walk with id {id} not found");
         }
-        return Ok(mapper.Map<WalkDto>(walk));
+        var walkWithRelations = await walkRepository.GetByIdAsync(id);
+        return Ok(mapper.Map<WalkDto>(walkWithRelations));
     }
 }

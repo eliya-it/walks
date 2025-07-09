@@ -52,3 +52,9 @@ publish/
 
 # Auto-generated secrets
 secrets.json
+
+./Uploads/*
+
+# Logs
+*.log
+*.txt
